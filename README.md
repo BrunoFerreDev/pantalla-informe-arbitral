@@ -10,13 +10,20 @@ Aplicación web ligera, rápida y 100% del lado del cliente para la confección,
   - Permite cargar hasta 3 logos institucionales (ej. AFA, Liga Local, Consejo Federal).
   - Título institucional editable con diseño reglamentario centrado.
   - Los logos y el título se guardan automáticamente en el navegador (`localStorage`) para no tener que cargarlos en cada informe.
-- **⏱️ Cálculo Automático de Horarios:**
-  - Calcula automáticamente los horarios del 1er tiempo, entretiempo y 2do tiempo según la división (*Primera División: 45+45*, *Sub-21: 40+40*) y los minutos adicionales.
+- **⏱️ División y Duración Personalizables:**
+  - Permite ingresar libremente cualquier categoría o división (*Primera División, Reserva, Sub-21, Sub-17, Femenino, etc.*).
+  - Permite configurar los **minutos por tiempo** (ej. 45, 40, 35, 30 min) y calcula automáticamente los horarios exactos del 1er tiempo, descanso y 2do tiempo junto con los minutos adicionales.
 - **📋 Gestión Disciplinaria Dinámica:**
   - Registro ágil de jugadores **expulsados** (minuto, dorsal, nombre, DNI, club, motivo y relato de la jugada).
   - Registro de jugadores **amonestados** (DNI, dorsal, nombre y club).
   - Generación automática de la narrativa reglamentaria oficial y tablas de incidencias.
-- **🖨️ Formato de Impresión y PDF Oficial:**
+- **✍️ Firma Digital y DNI del Árbitro:**
+  - Registro del **DNI del árbitro** que se imprime en el pie del informe junto a la aclaración de nombre.
+  - Opción de **subir una imagen de la firma** del árbitro para estamparla digitalmente sobre la línea reglamentaria.
+  - Si no se carga imagen, se genera la línea con el espacio correspondiente para la firma manuscrita tradicional.
+  - El nombre, DNI y firma se guardan en el navegador (`localStorage`) para futuros partidos.
+- **🖨️ Formato de Impresión y PDF Oficial con Nombre Automático:**
+  - Al guardar como PDF, el archivo se nombra automáticamente con el formato oficial: `[Club Local] vs [Club Visitante] - [División].pdf`.
   - Estilos CSS `@media print` diseñados específicamente para hojas de informe A4 con tipografía formal, firmas y márgenes limpios.
 - **📱 100% Offline y Mobile Friendly:**
   - No requiere servidor, base de datos ni conexión a internet.

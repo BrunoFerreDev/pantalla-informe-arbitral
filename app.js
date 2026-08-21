@@ -6,12 +6,20 @@ const headerState = {
   logoRight: null,
 };
 
+// Estado para datos del árbitro y firma
+const refereeState = {
+  name: '',
+  dni: '',
+  signature: null,
+};
+
 let expulsadoCount = 0;
 let amonestadoCount = 0;
 
 // Inicialización
 document.addEventListener('DOMContentLoaded', () => {
   loadHeaderData();
+  loadRefereeData();
   addExpulsado();
   addAmonestado();
 
@@ -111,6 +119,89 @@ function updateLogoSlotUI(slotKey, dataUrl) {
   }
 }
 
+// Guardar y cargar datos y firma del árbitro
+function saveRefereeData() {
+  refereeState.name = val('arbitro');
+  refereeState.dni = val('arbitroDni');
+  try {
+    localStorage.setItem('arbitro_perfil', JSON.stringify(refereeState));
+  } catch (err) {
+    console.warn('No se pudo guardar perfil del árbitro en localStorage:', err);
+  }
+}
+
+function loadRefereeData() {
+  try {
+    const saved = localStorage.getItem('arbitro_perfil');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.name) {
+        refereeState.name = parsed.name;
+        const nameEl = document.getElementById('arbitro');
+        if (nameEl) nameEl.value = parsed.name;
+      }
+      if (parsed.dni) {
+        refereeState.dni = parsed.dni;
+        const dniEl = document.getElementById('arbitroDni');
+        if (dniEl) dniEl.value = parsed.dni;
+      }
+      if (parsed.signature) {
+        refereeState.signature = parsed.signature;
+      }
+    }
+  } catch (err) {
+    console.warn('Error al cargar datos del árbitro de localStorage:', err);
+  }
+
+  updateSignatureUI();
+}
+
+function handleSignatureUpload(fileInput) {
+  const file = fileInput.files && fileInput.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    alert('Por favor selecciona una imagen válida para la firma (PNG, JPG, etc.).');
+    fileInput.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const dataUrl = e.target.result;
+    refereeState.signature = dataUrl;
+    updateSignatureUI();
+    saveRefereeData();
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeSignature() {
+  refereeState.signature = null;
+  const inputEl = document.getElementById('signatureInput');
+  if (inputEl) inputEl.value = '';
+  updateSignatureUI();
+  saveRefereeData();
+}
+
+function updateSignatureUI() {
+  const preview = document.getElementById('signaturePreview');
+  const removeBtn = document.getElementById('signatureRemoveBtn');
+  const uploadBtnWrapper = document.getElementById('signatureUploadBtnWrapper');
+
+  if (!preview) return;
+
+  if (refereeState.signature) {
+    preview.innerHTML = `<img src="${refereeState.signature}" alt="Firma cargada" class="signature-preview-img" />`;
+    if (removeBtn) removeBtn.style.display = 'inline-block';
+    if (uploadBtnWrapper) uploadBtnWrapper.style.display = 'none';
+  } else {
+    preview.innerHTML = `<span class="hint">Sin firma cargada (se dejará espacio para firma manual)</span>`;
+    if (removeBtn) removeBtn.style.display = 'none';
+    if (uploadBtnWrapper) uploadBtnWrapper.style.display = 'inline-block';
+  }
+}
+
 // Gestión de expulsados y amonestados
 function addExpulsado(data = {}) {
   expulsadoCount++;
@@ -171,24 +262,43 @@ function addMinutes(timeStr, minsToAdd) {
   return `${hh}:${mm}`;
 }
 
+function onDivisionChange() {
+  const divisionVal = val('division').toLowerCase();
+  const durInput = document.getElementById('duracionTiempo');
+  if (durInput) {
+    if (divisionVal.includes('sub-21') || divisionVal.includes('sub 21')) {
+      durInput.value = 40;
+    } else if (
+      divisionVal.includes('sub-17') ||
+      divisionVal.includes('sub 17') ||
+      divisionVal.includes('sub-15') ||
+      divisionVal.includes('sub 15') ||
+      divisionVal.includes('femenino')
+    ) {
+      durInput.value = 35;
+    } else if (divisionVal.includes('primera')) {
+      durInput.value = 45;
+    }
+  }
+  recalcularHorarios();
+}
+
 function recalcularHorarios() {
-  const sel = document.getElementById('division');
-  const opt = sel.options[sel.selectedIndex];
-  const dur = opt && opt.dataset.min ? parseInt(opt.dataset.min, 10) : null;
+  const durRaw = val('duracionTiempo');
+  const dur = durRaw ? parseInt(durRaw, 10) : 45;
+  const division = val('division');
   const hint = document.getElementById('duracionHint');
 
-  if (!dur) {
-    hint.textContent = 'Elegí la división para calcular los horarios automáticamente.';
-    return;
+  if (hint) {
+    hint.textContent = `${division ? division + ' — ' : ''}Cada tiempo dura ${dur} min + los minutos adicionados.`;
   }
-  hint.textContent = `${opt.textContent} — cada tiempo dura ${dur} min + los minutos adicionados.`;
 
   const horaInicio = val('horaInicio');
   if (!horaInicio) return;
 
   const adic1 = parseInt(val('adic1') || '0', 10);
   const adic2 = parseInt(val('adic2') || '0', 10);
-  const descanso = parseInt(val('descanso') || '0', 10);
+  const descanso = parseInt(val('descanso') || '15', 10);
 
   const t1hasta = addMinutes(horaInicio, dur + adic1);
   const t2desde = addMinutes(t1hasta, descanso);
@@ -217,6 +327,9 @@ function generarInforme() {
     : '—';
   const estadio = val('estadio') || '—';
   const arbitro = val('arbitro') || '—';
+  const arbitroDni = val('arbitroDni');
+  const firmaArbitro = refereeState.signature;
+
   const t1desde = val('t1desde') || '—';
   const t1hasta = val('t1hasta') || '—';
   const t2desde = val('t2desde') || '—';
@@ -334,18 +447,38 @@ function generarInforme() {
     <p class="cap-line"><strong>Nombre y apellido capitán visitante:</strong> ${capVisitante}</p>
 
     <div class="sign-row">
-      <div>Aclaración: <strong>${arbitro}</strong></div>
-      <div>Firma del árbitro: ______________________</div>
+      <div>
+        <div>Aclaración: <strong>${arbitro}</strong></div>
+        ${arbitroDni ? `<div style="margin-top: 4px;">D.N.I.: <strong>${arbitroDni}</strong></div>` : ''}
+      </div>
+      <div class="sign-col">
+        ${firmaArbitro ? `<img src="${firmaArbitro}" alt="Firma del árbitro" class="sign-img" />` : '<div class="sign-placeholder-space"></div>'}
+        <div class="sign-line">Firma del árbitro</div>
+      </div>
     </div>
   `;
 
   document.getElementById('reportContent').innerHTML = html;
   document.getElementById('formView').style.display = 'none';
   document.getElementById('reportView').style.display = 'block';
+  
+  // Asignar título del documento para que el PDF se descargue con este nombre
+  const pdfFileName = `${clubLocal} vs ${clubVisitante} - ${division}`;
+  document.title = pdfFileName;
+
   window.scrollTo(0, 0);
 }
 
+function imprimirInforme() {
+  const clubLocal = val('clubLocal') || 'Local';
+  const clubVisitante = val('clubVisitante') || 'Visitante';
+  const division = val('division') || 'División';
+  document.title = `${clubLocal} vs ${clubVisitante} - ${division}`;
+  window.print();
+}
+
 function volverAFormulario() {
+  document.title = 'Informe Arbitral Reglamentario';
   document.getElementById('formView').style.display = 'block';
   document.getElementById('reportView').style.display = 'none';
 }

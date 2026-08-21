@@ -145,7 +145,7 @@
           </div>
           <div></div>
         </div>
-        <div class="grid cols3">
+        <div class="grid">
           <div class="field">
             <label for="fecha">Fecha</label>
             <input id="fecha" type="date" />
@@ -154,25 +154,80 @@
             <label for="estadio">Estadio</label>
             <input id="estadio" />
           </div>
+        </div>
+        <div class="grid">
           <div class="field">
-            <label for="arbitro">Árbitro</label>
-            <input id="arbitro" />
+            <label for="arbitro">Árbitro (Nombre y Apellido)</label>
+            <input id="arbitro" oninput="saveRefereeData()" />
+          </div>
+          <div class="field">
+            <label for="arbitroDni">DNI del árbitro</label>
+            <input id="arbitroDni" oninput="saveRefereeData()" />
           </div>
         </div>
         <div class="field">
-          <label for="division">División</label>
-          <select id="division" onchange="recalcularHorarios()">
-            <option value="">Seleccionar...</option>
-            <option value="Primera Division" data-min="45">Primera División (45 + 45 min)</option>
-            <option value="Sub-21" data-min="40">Sub-21 (40 + 40 min)</option>
-          </select>
+          <label>Firma digital del árbitro (opcional)</label>
+          <div class="signature-upload-wrapper">
+            <div class="signature-preview" id="signaturePreview">
+              <span class="hint">Sin firma cargada (se dejará espacio para firma manual)</span>
+            </div>
+            <div class="file-input-wrapper" id="signatureUploadBtnWrapper">
+              <span class="btn-upload-logo">Subir firma</span>
+              <input
+                type="file"
+                id="signatureInput"
+                accept="image/*"
+                onchange="handleSignatureUpload(this)"
+              />
+            </div>
+            <button
+              type="button"
+              class="btn-remove-logo"
+              id="signatureRemoveBtn"
+              style="display: none;"
+              onclick="removeSignature()"
+            >
+              Quitar firma
+            </button>
+          </div>
+        </div>
+        <div class="grid">
+          <div class="field">
+            <label for="division">División / Categoría</label>
+            <input
+              id="division"
+              list="divisionesSugeridas"
+              oninput="onDivisionChange()"
+            />
+            <datalist id="divisionesSugeridas">
+              <option value="Primera División">
+              <option value="Reserva">
+              <option value="Sub-21">
+              <option value="Sub-17">
+              <option value="Sub-15">
+              <option value="Femenino">
+              <option value="Senior / Veteranos">
+            </datalist>
+          </div>
+          <div class="field">
+            <label for="duracionTiempo">Minutos por tiempo</label>
+            <input
+              id="duracionTiempo"
+              type="number"
+              min="1"
+              max="90"
+              value="45"
+              oninput="recalcularHorarios()"
+              onchange="recalcularHorarios()"
+            />
+          </div>
         </div>
       </div>
 
       <!-- Horarios -->
       <div class="card">
         <h2>Horarios</h2>
-        <p class="hint" id="duracionHint">Elegí la división para calcular los horarios automáticamente.</p>
+        <p class="hint" id="duracionHint">Configurá la hora de inicio para calcular los tiempos automáticamente.</p>
         <div class="grid cols3">
           <div class="field">
             <label for="horaInicio">Hora de inicio del partido</label>
@@ -265,7 +320,7 @@
     <div id="reportView">
       <div class="print-toolbar">
         <button type="button" class="btn-secondary" onclick="volverAFormulario()">← Editar datos</button>
-        <button type="button" class="btn-primary" onclick="window.print()">Imprimir / Guardar PDF</button>
+        <button type="button" class="btn-primary" onclick="imprimirInforme()">Imprimir / Guardar PDF</button>
       </div>
       <div class="report-page" id="reportContent"></div>
     </div>
