@@ -27,7 +27,6 @@ let deferredInstallPrompt = null;
 document.addEventListener('DOMContentLoaded', () => {
   initServiceWorker();
   initPwaInstallPrompt();
-  initNetworkStatus();
 
   loadHeaderData();
   loadRefereeData();
@@ -106,7 +105,6 @@ function initPwaInstallPrompt() {
   const isInStandaloneMode = ('standalone' in window.navigator) && (window.navigator.standalone);
 
   if (isIos && !isInStandaloneMode) {
-    // Mostrar banner con ayuda para iOS
     if (installBanner) {
       installBanner.style.display = 'flex';
       const btn = document.getElementById('btnInstallApp');
@@ -129,7 +127,6 @@ function triggerInstallPrompt() {
       dismissInstallBanner();
     });
   } else {
-    // Si no hay prompt nativo (ej. iOS o ya instalada)
     showIosModal();
   }
 }
@@ -147,37 +144,6 @@ function showIosModal() {
 function closeIosModal() {
   const modal = document.getElementById('iosInstallModal');
   if (modal) modal.style.display = 'none';
-}
-
-// ==========================================
-// ESTADO DE RED (ONLINE / OFFLINE)
-// ==========================================
-function initNetworkStatus() {
-  const updateStatus = () => {
-    const badge = document.getElementById('statusBadge');
-    const text = document.getElementById('statusText');
-    if (!badge || !text) return;
-
-    if (navigator.onLine) {
-      text.textContent = '100% Offline (Listo sin internet)';
-      badge.className = 'badge-offline';
-    } else {
-      text.textContent = 'Modo Offline Activo (Sin Conexión)';
-      badge.className = 'badge-offline';
-    }
-  };
-
-  window.addEventListener('online', () => {
-    updateStatus();
-    showToast('🟢 Conexión restablecida');
-  });
-
-  window.addEventListener('offline', () => {
-    updateStatus();
-    showToast('⚡ Sin conexión: Modo 100% offline activo');
-  });
-
-  updateStatus();
 }
 
 // ==========================================
@@ -928,4 +894,3 @@ function copiarFallback(texto) {
   }
   document.body.removeChild(textarea);
 }
-

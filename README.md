@@ -35,11 +35,15 @@ Aplicación web ligera, rápida y 100% del lado del cliente para la confección,
 
 ```
 pantallaInforme/
-├── index.html        # Estructura semántica del formulario y visor de informe
-├── styles.css        # Estilos visuales, sistema de carga de logos y reglas de impresión
-├── app.js            # Lógica de cálculo, persistencia en localStorage y generación de informe
-├── favicon.svg       # Favicon e icono vectorial de la aplicación
-└── README.md         # Documentación del proyecto
+├── index.html           # Estructura semántica del formulario y visor de informe PWA
+├── styles.css           # Estilos visuales, diseño responsive mobile y reglas de impresión
+├── app.js               # Lógica de cálculo, persistencia en localStorage y Web Share API
+├── sw.js                # Service Worker (motor de caché para funcionamiento 100% offline)
+├── manifest.webmanifest # Manifiesto de instalación PWA para Android e iOS
+├── favicon.svg          # Favicon e icono vectorial de la aplicación
+├── icons/               # Iconos de la aplicación en alta resolución para móviles
+├── app/                 # Carpeta complementaria con la versión app
+└── README.md            # Documentación del proyecto
 ```
 
 ---

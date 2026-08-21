@@ -1,332 +1,523 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Informe Arbitral Reglamentario</title>
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-  <div class="app">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>Informe Arbitral - Fútbol Oficial</title>
 
-    <header class="top">
-      <h1>Informe Arbitral</h1>
-      <p>Cargá los datos del partido y generá el informe listo para imprimir o guardar como PDF.</p>
-    </header>
+    <!-- PWA & Mobile Meta Tags -->
+    <meta name="theme-color" content="#132a45" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="Informe Árbitro" />
+    <meta
+      name="description"
+      content="Generador de informes arbitrales de fútbol reglamentarios, cálculo de tiempos y actas oficiales 100% offline."
+    />
 
-    <div id="formView">
-
-      <!-- Personalización del Encabezado y Logos -->
-      <div class="card">
-        <h2>Encabezado y Logos Institucionales</h2>
-        <div class="field">
-          <label for="headerTitle">Título institucional del informe</label>
-          <input
-            id="headerTitle"
-            type="text"
-            value="ASOCIACIÓN DEL FÚTBOL ARGENTINO"
-          />
-          <p class="hint">Este título y los logos se guardan automáticamente para tus próximos informes.</p>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <!-- Header Superior -->
+      <header class="top">
+        <div class="header-brand">
+          <img src="favicon.svg" alt="Logo" class="app-logo-badge" />
+          <h1>Informe Arbitral</h1>
         </div>
+        <p>
+          Cargá los datos del partido y generá el informe oficial listo para
+          imprimir, compartir o guardar como PDF.
+        </p>
+      </header>
 
-        <label>Logos del encabezado (opcional)</label>
-        <div class="logo-uploaders-grid">
-          <!-- Logo Izquierdo -->
-          <div class="logo-slot" id="logoLeftSlot">
-            <div class="logo-slot-title">Logo Izquierdo (Ej. AFA)</div>
-            <div class="logo-preview-container" id="logoLeftPreview">
-              <div class="logo-empty-placeholder">
-                <span class="icon">🖼️</span>
-                <span>Sin logo</span>
-              </div>
-            </div>
-            <div class="file-input-wrapper" id="logoLeftUploadWrapper">
-              <span class="btn-upload-logo">Subir logo</span>
-              <input
-                type="file"
-                id="logoLeftInput"
-                accept="image/*"
-                onchange="handleLogoUpload('logoLeft', this)"
-              />
-            </div>
-            <button
-              type="button"
-              class="btn-remove-logo"
-              id="logoLeftRemoveBtn"
-              style="display: none;"
-              onclick="removeLogo('logoLeft')"
+      <!-- Banner de Instalación PWA (Móviles / Tablets / PC) -->
+      <div class="install-banner" id="installBanner">
+        <div class="install-banner-text">
+          <span class="icon">📱</span>
+          <div>
+            <div class="install-banner-title">Instalar App en el Celular</div>
+            <span style="font-size: 12px; opacity: 0.9"
+              >Usala en la cancha sin conexión ni datos móviles.</span
             >
-              Quitar
-            </button>
           </div>
-
-          <!-- Logo Central -->
-          <div class="logo-slot" id="logoCenterSlot">
-            <div class="logo-slot-title">Logo Central (Ej. Liga)</div>
-            <div class="logo-preview-container" id="logoCenterPreview">
-              <div class="logo-empty-placeholder">
-                <span class="icon">🖼️</span>
-                <span>Sin logo</span>
-              </div>
-            </div>
-            <div class="file-input-wrapper" id="logoCenterUploadWrapper">
-              <span class="btn-upload-logo">Subir logo</span>
-              <input
-                type="file"
-                id="logoCenterInput"
-                accept="image/*"
-                onchange="handleLogoUpload('logoCenter', this)"
-              />
-            </div>
-            <button
-              type="button"
-              class="btn-remove-logo"
-              id="logoCenterRemoveBtn"
-              style="display: none;"
-              onclick="removeLogo('logoCenter')"
-            >
-              Quitar
-            </button>
-          </div>
-
-          <!-- Logo Derecho -->
-          <div class="logo-slot" id="logoRightSlot">
-            <div class="logo-slot-title">Logo Derecho (Ej. Consejo)</div>
-            <div class="logo-preview-container" id="logoRightPreview">
-              <div class="logo-empty-placeholder">
-                <span class="icon">🖼️</span>
-                <span>Sin logo</span>
-              </div>
-            </div>
-            <div class="file-input-wrapper" id="logoRightUploadWrapper">
-              <span class="btn-upload-logo">Subir logo</span>
-              <input
-                type="file"
-                id="logoRightInput"
-                accept="image/*"
-                onchange="handleLogoUpload('logoRight', this)"
-              />
-            </div>
-            <button
-              type="button"
-              class="btn-remove-logo"
-              id="logoRightRemoveBtn"
-              style="display: none;"
-              onclick="removeLogo('logoRight')"
-            >
-              Quitar
-            </button>
-          </div>
+        </div>
+        <div class="install-banner-actions">
+          <button
+            type="button"
+            class="btn-install-app"
+            id="btnInstallApp"
+            onclick="triggerInstallPrompt()"
+          >
+            Instalar
+          </button>
+          <button
+            type="button"
+            class="btn-dismiss-install"
+            onclick="dismissInstallBanner()"
+            title="Cerrar"
+          >
+            ✕
+          </button>
         </div>
       </div>
 
-      <!-- Partido y Resultado -->
-      <div class="card">
-        <h2>Partido y resultado</h2>
-        <div class="grid">
-          <div class="field">
-            <label for="clubLocal">Club local</label>
-            <input id="clubLocal" />
-          </div>
-          <div class="field">
-            <label for="clubVisitante">Club visitante</label>
-            <input id="clubVisitante" />
-          </div>
+      <!-- Barra de Herramientas Rápidas -->
+      <div class="quick-tools-bar" id="quickToolsBar">
+        <div class="auto-save-status" id="saveIndicator">
+          <span>✓ Borrador guardado automáticamente</span>
         </div>
-        <div class="grid cols3">
-          <div class="field">
-            <label for="golesLocal">Goles local</label>
-            <input id="golesLocal" type="number" min="0" />
-          </div>
-          <div class="field">
-            <label for="golesVisitante">Goles visitante</label>
-            <input id="golesVisitante" type="number" min="0" />
-          </div>
-          <div></div>
+        <div>
+          <button
+            type="button"
+            class="btn-link-action"
+            onclick="confirmarNuevoPartido()"
+          >
+            🔄 Nuevo partido
+          </button>
         </div>
-        <div class="grid">
+      </div>
+
+      <!-- Vista de Formulario -->
+      <div id="formView">
+        <!-- Personalización del Encabezado y Logos -->
+        <div class="card">
+          <h2>Encabezado y Logos Institucionales</h2>
           <div class="field">
-            <label for="fecha">Fecha</label>
-            <input id="fecha" type="date" />
-          </div>
-          <div class="field">
-            <label for="estadio">Estadio</label>
-            <input id="estadio" />
-          </div>
-        </div>
-        <div class="grid">
-          <div class="field">
-            <label for="arbitro">Árbitro (Nombre y Apellido)</label>
-            <input id="arbitro" oninput="saveRefereeData()" />
-          </div>
-          <div class="field">
-            <label for="arbitroDni">DNI del árbitro</label>
-            <input id="arbitroDni" oninput="saveRefereeData()" />
-          </div>
-        </div>
-        <div class="field">
-          <label>Firma digital del árbitro (opcional)</label>
-          <div class="signature-upload-wrapper">
-            <div class="signature-preview" id="signaturePreview">
-              <span class="hint">Sin firma cargada (se dejará espacio para firma manual)</span>
-            </div>
-            <div class="file-input-wrapper" id="signatureUploadBtnWrapper">
-              <span class="btn-upload-logo">Subir firma</span>
-              <input
-                type="file"
-                id="signatureInput"
-                accept="image/*"
-                onchange="handleSignatureUpload(this)"
-              />
-            </div>
-            <button
-              type="button"
-              class="btn-remove-logo"
-              id="signatureRemoveBtn"
-              style="display: none;"
-              onclick="removeSignature()"
-            >
-              Quitar firma
-            </button>
-          </div>
-        </div>
-        <div class="grid">
-          <div class="field">
-            <label for="division">División / Categoría</label>
+            <label for="headerTitle">Título institucional del informe</label>
             <input
-              id="division"
-              list="divisionesSugeridas"
-              oninput="onDivisionChange()"
+              id="headerTitle"
+              type="text"
+              value="ASOCIACIÓN DEL FÚTBOL ARGENTINO"
             />
-            <datalist id="divisionesSugeridas">
-              <option value="Primera División">
-              <option value="Reserva">
-              <option value="Sub-21">
-              <option value="Sub-17">
-              <option value="Sub-15">
-              <option value="Femenino">
-              <option value="Senior / Veteranos">
-            </datalist>
+            <p class="hint">
+              Este título y los logos se guardan de forma permanente en tu
+              dispositivo para todos tus informes.
+            </p>
+          </div>
+
+          <label>Logos del encabezado (opcional)</label>
+          <div class="logo-uploaders-grid">
+            <!-- Logo Izquierdo -->
+            <div class="logo-slot" id="logoLeftSlot">
+              <div class="logo-slot-title">Logo Izquierdo (Ej. AFA)</div>
+              <div class="logo-preview-container" id="logoLeftPreview">
+                <div class="logo-empty-placeholder">
+                  <span class="icon">🖼️</span>
+                  <span>Sin logo</span>
+                </div>
+              </div>
+              <div class="file-input-wrapper" id="logoLeftUploadWrapper">
+                <span class="btn-upload-logo">Subir logo</span>
+                <input
+                  type="file"
+                  id="logoLeftInput"
+                  accept="image/*"
+                  onchange="handleLogoUpload('logoLeft', this)"
+                />
+              </div>
+              <button
+                type="button"
+                class="btn-remove-logo"
+                id="logoLeftRemoveBtn"
+                style="display: none"
+                onclick="removeLogo('logoLeft')"
+              >
+                Quitar
+              </button>
+            </div>
+
+            <!-- Logo Central -->
+            <div class="logo-slot" id="logoCenterSlot">
+              <div class="logo-slot-title">Logo Central (Ej. Liga)</div>
+              <div class="logo-preview-container" id="logoCenterPreview">
+                <div class="logo-empty-placeholder">
+                  <span class="icon">🖼️</span>
+                  <span>Sin logo</span>
+                </div>
+              </div>
+              <div class="file-input-wrapper" id="logoCenterUploadWrapper">
+                <span class="btn-upload-logo">Subir logo</span>
+                <input
+                  type="file"
+                  id="logoCenterInput"
+                  accept="image/*"
+                  onchange="handleLogoUpload('logoCenter', this)"
+                />
+              </div>
+              <button
+                type="button"
+                class="btn-remove-logo"
+                id="logoCenterRemoveBtn"
+                style="display: none"
+                onclick="removeLogo('logoCenter')"
+              >
+                Quitar
+              </button>
+            </div>
+
+            <!-- Logo Derecho -->
+            <div class="logo-slot" id="logoRightSlot">
+              <div class="logo-slot-title">Logo Derecho (Ej. Consejo)</div>
+              <div class="logo-preview-container" id="logoRightPreview">
+                <div class="logo-empty-placeholder">
+                  <span class="icon">🖼️</span>
+                  <span>Sin logo</span>
+                </div>
+              </div>
+              <div class="file-input-wrapper" id="logoRightUploadWrapper">
+                <span class="btn-upload-logo">Subir logo</span>
+                <input
+                  type="file"
+                  id="logoRightInput"
+                  accept="image/*"
+                  onchange="handleLogoUpload('logoRight', this)"
+                />
+              </div>
+              <button
+                type="button"
+                class="btn-remove-logo"
+                id="logoRightRemoveBtn"
+                style="display: none"
+                onclick="removeLogo('logoRight')"
+              >
+                Quitar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Partido y Resultado -->
+        <div class="card">
+          <h2>Partido y resultado</h2>
+          <div class="grid">
+            <div class="field">
+              <label for="clubLocal">Club local</label>
+              <input id="clubLocal" placeholder="Ej. Club Atlético Huracán" />
+            </div>
+            <div class="field">
+              <label for="clubVisitante">Club visitante</label>
+              <input
+                id="clubVisitante"
+                placeholder="Ej. Club Social y Deportivo"
+              />
+            </div>
+          </div>
+          <div class="grid cols3">
+            <div class="field">
+              <label for="golesLocal">Goles local</label>
+              <input
+                id="golesLocal"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                placeholder="0"
+              />
+            </div>
+            <div class="field">
+              <label for="golesVisitante">Goles visitante</label>
+              <input
+                id="golesVisitante"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                placeholder="0"
+              />
+            </div>
+            <div></div>
+          </div>
+          <div class="grid">
+            <div class="field">
+              <label for="fecha">Fecha</label>
+              <input id="fecha" type="date" />
+            </div>
+            <div class="field">
+              <label for="estadio">Estadio</label>
+              <input id="estadio" placeholder="Ej. Estadio Municipal" />
+            </div>
+          </div>
+          <div class="grid">
+            <div class="field">
+              <label for="arbitro">Árbitro (Nombre y Apellido)</label>
+              <input
+                id="arbitro"
+                oninput="saveRefereeData()"
+                placeholder="Nombre completo"
+              />
+            </div>
+            <div class="field">
+              <label for="arbitroDni">DNI del árbitro</label>
+              <input
+                id="arbitroDni"
+                inputmode="numeric"
+                oninput="saveRefereeData()"
+                placeholder="Sin puntos"
+              />
+            </div>
           </div>
           <div class="field">
-            <label for="duracionTiempo">Minutos por tiempo</label>
-            <input
-              id="duracionTiempo"
-              type="number"
-              min="1"
-              max="90"
-              value="45"
-              oninput="recalcularHorarios()"
-              onchange="recalcularHorarios()"
-            />
+            <label>Firma digital del árbitro (opcional)</label>
+            <div class="signature-upload-wrapper">
+              <div class="signature-preview" id="signaturePreview">
+                <span class="hint"
+                  >Sin firma cargada (se dejará espacio para firma manual)</span
+                >
+              </div>
+              <div class="file-input-wrapper" id="signatureUploadBtnWrapper">
+                <span class="btn-upload-logo">Subir firma</span>
+                <input
+                  type="file"
+                  id="signatureInput"
+                  accept="image/*"
+                  onchange="handleSignatureUpload(this)"
+                />
+              </div>
+              <button
+                type="button"
+                class="btn-remove-logo"
+                id="signatureRemoveBtn"
+                style="display: none"
+                onclick="removeSignature()"
+              >
+                Quitar firma
+              </button>
+            </div>
           </div>
+          <div class="grid">
+            <div class="field">
+              <label for="division">División / Categoría</label>
+              <input
+                id="division"
+                list="divisionesSugeridas"
+                placeholder="Ej. Primera División"
+                oninput="onDivisionChange()"
+              />
+              <datalist id="divisionesSugeridas">
+                <option value="Primera División"></option>
+                <option value="Reserva"></option>
+                <option value="Sub-21"></option>
+                <option value="Sub-17"></option>
+                <option value="Sub-15"></option>
+                <option value="Femenino"></option>
+                <option value="Senior / Veteranos"></option>
+              </datalist>
+            </div>
+            <div class="field">
+              <label for="duracionTiempo">Minutos por tiempo</label>
+              <input
+                id="duracionTiempo"
+                type="number"
+                inputmode="numeric"
+                min="1"
+                max="90"
+                value="45"
+                oninput="recalcularHorarios()"
+                onchange="recalcularHorarios()"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Horarios -->
+        <div class="card">
+          <h2>Horarios del Partido</h2>
+          <p class="hint" id="duracionHint">
+            Configurá la hora de inicio para calcular los tiempos
+            automáticamente.
+          </p>
+          <div class="grid cols3">
+            <div class="field">
+              <label for="horaInicio">Hora de inicio del partido</label>
+              <input
+                id="horaInicio"
+                type="time"
+                onchange="recalcularHorarios()"
+              />
+            </div>
+            <div class="field">
+              <label for="descanso">Entretiempo (min)</label>
+              <input
+                id="descanso"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                value="15"
+                oninput="recalcularHorarios()"
+                onchange="recalcularHorarios()"
+              />
+            </div>
+            <div></div>
+          </div>
+          <div class="grid">
+            <div class="field">
+              <label for="adic1">Adicionados 1er tiempo (min)</label>
+              <input
+                id="adic1"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                value="0"
+                oninput="recalcularHorarios()"
+                onchange="recalcularHorarios()"
+              />
+            </div>
+            <div class="field">
+              <label for="adic2">Adicionados 2do tiempo (min)</label>
+              <input
+                id="adic2"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                value="0"
+                oninput="recalcularHorarios()"
+                onchange="recalcularHorarios()"
+              />
+            </div>
+          </div>
+          <div class="grid cols4" style="margin-top: 6px">
+            <div class="field">
+              <label>1T Desde (auto)</label>
+              <input id="t1desde" type="time" readonly />
+            </div>
+            <div class="field">
+              <label>1T Hasta (auto)</label>
+              <input id="t1hasta" type="time" readonly />
+            </div>
+            <div class="field">
+              <label>2T Desde (auto)</label>
+              <input id="t2desde" type="time" readonly />
+            </div>
+            <div class="field">
+              <label>2T Hasta (auto)</label>
+              <input id="t2hasta" type="time" readonly />
+            </div>
+          </div>
+        </div>
+
+        <!-- Explicación de Hecho -->
+        <div class="card">
+          <h2>Explicación de hecho (relato del árbitro)</h2>
+          <div class="field">
+            <label for="relato"
+              >Texto libre — incidentes, informe general, estado del campo,
+              etc.</label
+            >
+            <textarea
+              id="relato"
+              placeholder="Escribí acá las observaciones generales o dejalo en blanco si solo usás la tabla de expulsados..."
+              style="min-height: 100px"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Expulsados -->
+        <div class="card">
+          <h2>Expulsados</h2>
+          <div id="expulsadosList"></div>
+          <button type="button" class="add-btn" onclick="addExpulsado()">
+            + Agregar expulsado
+          </button>
+        </div>
+
+        <!-- Amonestados -->
+        <div class="card">
+          <h2>Amonestados</h2>
+          <div id="amonestadosList"></div>
+          <button type="button" class="add-btn" onclick="addAmonestado()">
+            + Agregar amonestado
+          </button>
+        </div>
+
+        <!-- Capitanes -->
+        <div class="card">
+          <h2>Capitanes</h2>
+          <div class="grid">
+            <div class="field">
+              <label for="capLocal">Capitán local (nombre y N°)</label>
+              <input id="capLocal" placeholder="Ej. Juan Pérez (N° 5)" />
+            </div>
+            <div class="field">
+              <label for="capVisitante">Capitán visitante (nombre y N°)</label>
+              <input id="capVisitante" placeholder="Ej. Carlos Gómez (N° 10)" />
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn-primary" onclick="generarInforme()">
+            📋 Generar informe oficial
+          </button>
         </div>
       </div>
 
-      <!-- Horarios -->
-      <div class="card">
-        <h2>Horarios</h2>
-        <p class="hint" id="duracionHint">Configurá la hora de inicio para calcular los tiempos automáticamente.</p>
-        <div class="grid cols3">
-          <div class="field">
-            <label for="horaInicio">Hora de inicio del partido</label>
-            <input id="horaInicio" type="time" onchange="recalcularHorarios()" />
-          </div>
-          <div class="field">
-            <label for="descanso">Duración del entretiempo (min)</label>
-            <input id="descanso" type="number" min="0" value="15" onchange="recalcularHorarios()" />
-          </div>
-          <div></div>
+      <!-- Vista de Reporte Final -->
+      <div id="reportView">
+        <div class="print-toolbar">
+          <button
+            type="button"
+            class="btn-secondary"
+            onclick="volverAFormulario()"
+          >
+            ← Editar datos
+          </button>
+          <button type="button" class="btn-primary" onclick="imprimirInforme()">
+            🖨️ Imprimir / Guardar PDF
+          </button>
+          <button type="button" class="btn-share" onclick="compartirInforme()">
+            📲 Compartir (WhatsApp)
+          </button>
+          <button
+            type="button"
+            class="btn-secondary"
+            onclick="copiarTextoInforme()"
+          >
+            📋 Copiar Resumen
+          </button>
         </div>
-        <div class="grid">
-          <div class="field">
-            <label for="adic1">Minutos adicionados 1er tiempo</label>
-            <input id="adic1" type="number" min="0" value="0" onchange="recalcularHorarios()" />
-          </div>
-          <div class="field">
-            <label for="adic2">Minutos adicionados 2do tiempo</label>
-            <input id="adic2" type="number" min="0" value="0" onchange="recalcularHorarios()" />
-          </div>
-        </div>
-        <div class="grid cols4" style="margin-top: 6px">
-          <div class="field">
-            <label>1er tiempo desde (auto)</label>
-            <input id="t1desde" type="time" readonly />
-          </div>
-          <div class="field">
-            <label>1er tiempo hasta (auto)</label>
-            <input id="t1hasta" type="time" readonly />
-          </div>
-          <div class="field">
-            <label>2do tiempo desde (auto)</label>
-            <input id="t2desde" type="time" readonly />
-          </div>
-          <div class="field">
-            <label>2do tiempo hasta (auto)</label>
-            <input id="t2hasta" type="time" readonly />
-          </div>
-        </div>
-      </div>
-
-      <!-- Explicación de Hecho -->
-      <div class="card">
-        <h2>Explicación de hecho (relato del árbitro)</h2>
-        <div class="field">
-          <label for="relato">Texto libre — describí lo sucedido (expulsiones, incidentes, etc.)</label>
-          <textarea
-            id="relato"
-            style="min-height: 120px"
-          ></textarea>
-          <p class="hint">Se puede escribir todo el relato acá, o dejarlo en blanco y usar solo la lista de expulsados de abajo.</p>
-        </div>
-      </div>
-
-      <!-- Expulsados -->
-      <div class="card">
-        <h2>Expulsados</h2>
-        <div id="expulsadosList"></div>
-        <button type="button" class="add-btn" onclick="addExpulsado()">+ Agregar expulsado</button>
-      </div>
-
-      <!-- Amonestados -->
-      <div class="card">
-        <h2>Amonestados</h2>
-        <div id="amonestadosList"></div>
-        <button type="button" class="add-btn" onclick="addAmonestado()">+ Agregar amonestado</button>
-      </div>
-
-      <!-- Capitanes -->
-      <div class="card">
-        <h2>Capitanes</h2>
-        <div class="grid">
-          <div class="field">
-            <label for="capLocal">Capitán local (nombre y N°)</label>
-            <input id="capLocal" />
-          </div>
-          <div class="field">
-            <label for="capVisitante">Capitán visitante (nombre y N°)</label>
-            <input id="capVisitante" />
-          </div>
-        </div>
-      </div>
-
-      <div class="actions">
-        <button type="button" class="btn-primary" onclick="generarInforme()">Generar informe</button>
+        <div class="report-page" id="reportContent"></div>
       </div>
     </div>
 
-    <!-- Vista de Reporte Final -->
-    <div id="reportView">
-      <div class="print-toolbar">
-        <button type="button" class="btn-secondary" onclick="volverAFormulario()">← Editar datos</button>
-        <button type="button" class="btn-primary" onclick="imprimirInforme()">Imprimir / Guardar PDF</button>
-      </div>
-      <div class="report-page" id="reportContent"></div>
+    <!-- Toast Notification -->
+    <div class="toast-container" id="toast">
+      <span id="toastMessage">✓ Notificación</span>
     </div>
 
-  </div>
+    <!-- Modal Instrucciones iOS -->
+    <div class="modal-overlay" id="iosInstallModal">
+      <div class="modal-card">
+        <div style="font-size: 36px; margin-bottom: 8px">📲</div>
+        <h3>Cómo instalar en tu iPhone / iPad</h3>
+        <ol>
+          <li>
+            Toca el botón <strong>Compartir</strong>
+            <span style="font-size: 16px"
+              >(el ícono de la flecha hacia arriba ⎋)</span
+            >
+            en la barra inferior de Safari.
+          </li>
+          <li>
+            Baja por las opciones y selecciona
+            <strong>"Agregar a pantalla de inicio"</strong> ➕.
+          </li>
+          <li>Toca <strong>"Agregar"</strong> arriba a la derecha.</li>
+        </ol>
+        <button type="button" class="btn-modal-close" onclick="closeIosModal()">
+          Entendido
+        </button>
+      </div>
+    </div>
 
-  <script src="app.js"></script>
-</body>
+    <script src="app.js"></script>
+  </body>
 </html>

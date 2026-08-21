@@ -1,4 +1,8 @@
-// Estado para logos y título institucional
+// ==========================================
+// ⚽ INFORME ARBITRAL - PWA 100% OFFLINE
+// ==========================================
+
+// Estado para logos y título institucional (Persistente)
 const headerState = {
   title: 'ASOCIACIÓN DEL FÚTBOL ARGENTINO',
   logoLeft: null,
@@ -6,7 +10,7 @@ const headerState = {
   logoRight: null,
 };
 
-// Estado para datos del árbitro y firma
+// Estado para datos del árbitro y firma digital (Persistente)
 const refereeState = {
   name: '',
   dni: '',
@@ -15,13 +19,24 @@ const refereeState = {
 
 let expulsadoCount = 0;
 let amonestadoCount = 0;
+let deferredInstallPrompt = null;
 
-// Inicialización
+// ==========================================
+// INICIALIZACIÓN
+// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
+  initServiceWorker();
+  initPwaInstallPrompt();
+
   loadHeaderData();
   loadRefereeData();
-  addExpulsado();
-  addAmonestado();
+  
+  // Cargar borrador guardado o inicializar nuevo
+  const hasDraft = loadMatchDraft();
+  if (!hasDraft) {
+    addExpulsado();
+    addAmonestado();
+  }
 
   // Escuchar cambios en el título del encabezado
   const titleInput = document.getElementById('headerTitle');
@@ -29,11 +44,127 @@ document.addEventListener('DOMContentLoaded', () => {
     titleInput.addEventListener('input', (e) => {
       headerState.title = e.target.value;
       saveHeaderData();
+      saveMatchDraft();
     });
   }
+
+  // Auto-guardado de borrador en inputs generales
+  document.getElementById('formView').addEventListener('input', () => {
+    saveMatchDraft();
+  });
 });
 
-// Guardar y cargar configuración del encabezado en LocalStorage
+// ==========================================
+// SERVICE WORKER & PWA INSTALL
+// ==========================================
+function initServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker
+        .register('./sw.js')
+        .then((reg) => {
+          console.log('[PWA] Service Worker registrado con éxito:', reg.scope);
+          
+          // Detectar si hay nueva versión
+          reg.onupdatefound = () => {
+            const installingWorker = reg.installing;
+            installingWorker.onstatechange = () => {
+              if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                showToast('⚡ Aplicación actualizada a la última versión');
+              }
+            };
+          };
+        })
+        .catch((err) => {
+          console.warn('[PWA] Error al registrar Service Worker:', err);
+        });
+    });
+  }
+}
+
+function initPwaInstallPrompt() {
+  const installBanner = document.getElementById('installBanner');
+
+  // Detección de Android / Chrome PWA prompt
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    if (installBanner) {
+      installBanner.style.display = 'flex';
+    }
+  });
+
+  window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    if (installBanner) installBanner.style.display = 'none';
+    showToast('🎉 ¡App instalada en tu pantalla principal!');
+  });
+
+  // Detección de iOS Safari no instalado
+  const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+  const isInStandaloneMode = ('standalone' in window.navigator) && (window.navigator.standalone);
+
+  if (isIos && !isInStandaloneMode) {
+    if (installBanner) {
+      installBanner.style.display = 'flex';
+      const btn = document.getElementById('btnInstallApp');
+      if (btn) {
+        btn.textContent = 'Ver cómo instalar';
+        btn.onclick = showIosModal;
+      }
+    }
+  }
+}
+
+function triggerInstallPrompt() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('[PWA] Usuario aceptó la instalación');
+      }
+      deferredInstallPrompt = null;
+      dismissInstallBanner();
+    });
+  } else {
+    showIosModal();
+  }
+}
+
+function dismissInstallBanner() {
+  const banner = document.getElementById('installBanner');
+  if (banner) banner.style.display = 'none';
+}
+
+function showIosModal() {
+  const modal = document.getElementById('iosInstallModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeIosModal() {
+  const modal = document.getElementById('iosInstallModal');
+  if (modal) modal.style.display = 'none';
+}
+
+// ==========================================
+// TOAST NOTIFICATIONS
+// ==========================================
+function showToast(message, duration = 3000) {
+  const toast = document.getElementById('toast');
+  const toastMsg = document.getElementById('toastMessage');
+  if (!toast || !toastMsg) return;
+
+  toastMsg.textContent = message;
+  toast.classList.add('show');
+
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, duration);
+}
+
+// ==========================================
+// CONFIGURACIÓN DE ENCABEZADO Y LOGOS
+// ==========================================
 function saveHeaderData() {
   try {
     localStorage.setItem('arbitro_informe_header', JSON.stringify(headerState));
@@ -53,10 +184,9 @@ function loadHeaderData() {
       if (parsed.logoRight) headerState.logoRight = parsed.logoRight;
     }
   } catch (err) {
-    console.warn('Error al cargar datos de localStorage:', err);
+    console.warn('Error al cargar datos del encabezado:', err);
   }
 
-  // Actualizar UI
   const titleInput = document.getElementById('headerTitle');
   if (titleInput) {
     titleInput.value = headerState.title || '';
@@ -66,13 +196,12 @@ function loadHeaderData() {
   updateLogoSlotUI('logoRight', headerState.logoRight);
 }
 
-// Gestión de subida de logos
 function handleLogoUpload(slotKey, fileInput) {
   const file = fileInput.files && fileInput.files[0];
   if (!file) return;
 
   if (!file.type.startsWith('image/')) {
-    alert('Por favor selecciona un archivo de imagen válido (PNG, JPG, SVG, etc.).');
+    alert('Por favor selecciona un archivo de imagen válido (PNG, JPG, SVG).');
     fileInput.value = '';
     return;
   }
@@ -83,6 +212,7 @@ function handleLogoUpload(slotKey, fileInput) {
     headerState[slotKey] = dataUrl;
     updateLogoSlotUI(slotKey, dataUrl);
     saveHeaderData();
+    showToast('✓ Logo guardado en el dispositivo');
   };
   reader.readAsDataURL(file);
 }
@@ -94,6 +224,7 @@ function removeLogo(slotKey) {
   if (inputEl) inputEl.value = '';
   updateLogoSlotUI(slotKey, null);
   saveHeaderData();
+  showToast('Logo quitado');
 }
 
 function updateLogoSlotUI(slotKey, dataUrl) {
@@ -119,14 +250,16 @@ function updateLogoSlotUI(slotKey, dataUrl) {
   }
 }
 
-// Guardar y cargar datos y firma del árbitro
+// ==========================================
+// PERFIL Y FIRMA DIGITAL DEL ÁRBITRO
+// ==========================================
 function saveRefereeData() {
   refereeState.name = val('arbitro');
   refereeState.dni = val('arbitroDni');
   try {
     localStorage.setItem('arbitro_perfil', JSON.stringify(refereeState));
   } catch (err) {
-    console.warn('No se pudo guardar perfil del árbitro en localStorage:', err);
+    console.warn('No se pudo guardar perfil del árbitro:', err);
   }
 }
 
@@ -150,7 +283,7 @@ function loadRefereeData() {
       }
     }
   } catch (err) {
-    console.warn('Error al cargar datos del árbitro de localStorage:', err);
+    console.warn('Error al cargar datos del árbitro:', err);
   }
 
   updateSignatureUI();
@@ -161,7 +294,7 @@ function handleSignatureUpload(fileInput) {
   if (!file) return;
 
   if (!file.type.startsWith('image/')) {
-    alert('Por favor selecciona una imagen válida para la firma (PNG, JPG, etc.).');
+    alert('Por favor selecciona una imagen válida para la firma (PNG, JPG).');
     fileInput.value = '';
     return;
   }
@@ -172,6 +305,7 @@ function handleSignatureUpload(fileInput) {
     refereeState.signature = dataUrl;
     updateSignatureUI();
     saveRefereeData();
+    showToast('✓ Firma digital guardada en el dispositivo');
   };
   reader.readAsDataURL(file);
 }
@@ -182,6 +316,7 @@ function removeSignature() {
   if (inputEl) inputEl.value = '';
   updateSignatureUI();
   saveRefereeData();
+  showToast('Firma digital quitada');
 }
 
 function updateSignatureUI() {
@@ -202,7 +337,9 @@ function updateSignatureUI() {
   }
 }
 
-// Gestión de expulsados y amonestados
+// ==========================================
+// GESTIÓN DE EXPULSADOS Y AMONESTADOS
+// ==========================================
 function addExpulsado(data = {}) {
   expulsadoCount++;
   const id = 'exp_' + expulsadoCount;
@@ -210,23 +347,30 @@ function addExpulsado(data = {}) {
   div.className = 'row-item';
   div.id = id;
   div.innerHTML = `
-    <button type="button" class="del" onclick="document.getElementById('${id}').remove()">Quitar ✕</button>
+    <button type="button" class="del" onclick="removeExpulsado('${id}')">Quitar ✕</button>
     <div class="grid cols4">
-      <div class="field"><label>Minuto</label><input class="exp-min" type="number" value="${data.minuto !== undefined ? data.minuto : ''}"></div>
-      <div class="field"><label>N°</label><input class="exp-num" type="number" value="${data.numero !== undefined ? data.numero : ''}"></div>
-      <div class="field"><label>Nombre y apellido</label><input class="exp-nombre" value="${data.nombre || ''}"></div>
-      <div class="field"><label>DNI</label><input class="exp-dni" value="${data.dni || ''}"></div>
+      <div class="field"><label>Minuto</label><input class="exp-min" type="number" inputmode="numeric" placeholder="Ej. 34" value="${data.minuto !== undefined ? data.minuto : ''}"></div>
+      <div class="field"><label>Dorsal N°</label><input class="exp-num" type="number" inputmode="numeric" placeholder="Ej. 10" value="${data.numero !== undefined ? data.numero : ''}"></div>
+      <div class="field"><label>Nombre y apellido</label><input class="exp-nombre" placeholder="Nombre completo" value="${data.nombre || ''}"></div>
+      <div class="field"><label>DNI / Ficha</label><input class="exp-dni" inputmode="numeric" placeholder="DNI" value="${data.dni || ''}"></div>
     </div>
     <div class="grid cols3">
-      <div class="field"><label>Club</label><input class="exp-club" value="${data.club || ''}"></div>
-      <div class="field" style="grid-column: span 2;"><label>Motivo (breve)</label><input class="exp-motivo" value="${data.motivo || ''}"></div>
+      <div class="field"><label>Club</label><input class="exp-club" placeholder="Club del jugador" value="${data.club || ''}"></div>
+      <div class="field" style="grid-column: span 2;"><label>Motivo reglamentario (breve)</label><input class="exp-motivo" placeholder="Ej. Conducta violenta / Agresión verbal" value="${data.motivo || ''}"></div>
     </div>
     <div class="field">
-      <label>Explicación de la expulsión (con tus palabras)</label>
-      <textarea class="exp-detalle">${data.detalle || ''}</textarea>
+      <label>Explicación de la expulsión (relato detallado)</label>
+      <textarea class="exp-detalle" placeholder="Describí con precisión lo ocurrido...">${data.detalle || ''}</textarea>
     </div>
   `;
   document.getElementById('expulsadosList').appendChild(div);
+  saveMatchDraft();
+}
+
+function removeExpulsado(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+  saveMatchDraft();
 }
 
 function addAmonestado(data = {}) {
@@ -236,20 +380,35 @@ function addAmonestado(data = {}) {
   div.className = 'row-item';
   div.id = id;
   div.innerHTML = `
-    <button type="button" class="del" onclick="document.getElementById('${id}').remove()">Quitar ✕</button>
+    <button type="button" class="del" onclick="removeAmonestado('${id}')">Quitar ✕</button>
     <div class="grid cols4">
-      <div class="field"><label>DNI</label><input class="amo-dni" value="${data.dni || ''}"></div>
-      <div class="field"><label>N°</label><input class="amo-num" type="number" value="${data.numero !== undefined ? data.numero : ''}"></div>
-      <div class="field"><label>Nombre y apellido</label><input class="amo-nombre" value="${data.nombre || ''}"></div>
-      <div class="field"><label>Club</label><input class="amo-club" value="${data.club || ''}"></div>
+      <div class="field"><label>DNI / Ficha</label><input class="amo-dni" inputmode="numeric" placeholder="DNI" value="${data.dni || ''}"></div>
+      <div class="field"><label>Dorsal N°</label><input class="amo-num" type="number" inputmode="numeric" placeholder="N°" value="${data.numero !== undefined ? data.numero : ''}"></div>
+      <div class="field"><label>Nombre y apellido</label><input class="amo-nombre" placeholder="Nombre del jugador" value="${data.nombre || ''}"></div>
+      <div class="field"><label>Club</label><input class="amo-club" placeholder="Club" value="${data.club || ''}"></div>
     </div>
   `;
   document.getElementById('amonestadosList').appendChild(div);
+  saveMatchDraft();
 }
 
+function removeAmonestado(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+  saveMatchDraft();
+}
+
+// ==========================================
+// CÁLCULO DE HORARIOS Y TIEMPOS
+// ==========================================
 function val(id) {
   const el = document.getElementById(id);
   return el ? el.value.trim() : '';
+}
+
+function setVal(id, value) {
+  const el = document.getElementById(id);
+  if (el && value !== undefined) el.value = value;
 }
 
 function addMinutes(timeStr, minsToAdd) {
@@ -308,9 +467,147 @@ function recalcularHorarios() {
   document.getElementById('t1hasta').value = t1hasta;
   document.getElementById('t2desde').value = t2desde;
   document.getElementById('t2hasta').value = t2hasta;
+  
+  saveMatchDraft();
 }
 
-// Generación de Informe Final
+// ==========================================
+// PERSISTENCIA DE BORRADOR DEL PARTIDO
+// ==========================================
+function saveMatchDraft() {
+  const draft = {
+    clubLocal: val('clubLocal'),
+    clubVisitante: val('clubVisitante'),
+    golesLocal: val('golesLocal'),
+    golesVisitante: val('golesVisitante'),
+    fecha: val('fecha'),
+    estadio: val('estadio'),
+    division: val('division'),
+    duracionTiempo: val('duracionTiempo'),
+    horaInicio: val('horaInicio'),
+    descanso: val('descanso'),
+    adic1: val('adic1'),
+    adic2: val('adic2'),
+    relato: val('relato'),
+    capLocal: val('capLocal'),
+    capVisitante: val('capVisitante'),
+    expulsados: [],
+    amonestados: []
+  };
+
+  document.querySelectorAll('#expulsadosList .row-item').forEach((row) => {
+    draft.expulsados.push({
+      minuto: row.querySelector('.exp-min')?.value.trim() || '',
+      numero: row.querySelector('.exp-num')?.value.trim() || '',
+      nombre: row.querySelector('.exp-nombre')?.value.trim() || '',
+      dni: row.querySelector('.exp-dni')?.value.trim() || '',
+      club: row.querySelector('.exp-club')?.value.trim() || '',
+      motivo: row.querySelector('.exp-motivo')?.value.trim() || '',
+      detalle: row.querySelector('.exp-detalle')?.value.trim() || ''
+    });
+  });
+
+  document.querySelectorAll('#amonestadosList .row-item').forEach((row) => {
+    draft.amonestados.push({
+      dni: row.querySelector('.amo-dni')?.value.trim() || '',
+      numero: row.querySelector('.amo-num')?.value.trim() || '',
+      nombre: row.querySelector('.amo-nombre')?.value.trim() || '',
+      club: row.querySelector('.amo-club')?.value.trim() || ''
+    });
+  });
+
+  try {
+    localStorage.setItem('arbitro_borrador_partido', JSON.stringify(draft));
+  } catch (e) {
+    console.warn('Error guardando borrador:', e);
+  }
+}
+
+function loadMatchDraft() {
+  try {
+    const saved = localStorage.getItem('arbitro_borrador_partido');
+    if (!saved) return false;
+
+    const draft = JSON.parse(saved);
+    setVal('clubLocal', draft.clubLocal);
+    setVal('clubVisitante', draft.clubVisitante);
+    setVal('golesLocal', draft.golesLocal);
+    setVal('golesVisitante', draft.golesVisitante);
+    setVal('fecha', draft.fecha);
+    setVal('estadio', draft.estadio);
+    setVal('division', draft.division);
+    if (draft.duracionTiempo) setVal('duracionTiempo', draft.duracionTiempo);
+    setVal('horaInicio', draft.horaInicio);
+    if (draft.descanso !== undefined) setVal('descanso', draft.descanso);
+    if (draft.adic1 !== undefined) setVal('adic1', draft.adic1);
+    if (draft.adic2 !== undefined) setVal('adic2', draft.adic2);
+    setVal('relato', draft.relato);
+    setVal('capLocal', draft.capLocal);
+    setVal('capVisitante', draft.capVisitante);
+
+    // Cargar expulsados
+    document.getElementById('expulsadosList').innerHTML = '';
+    if (draft.expulsados && draft.expulsados.length > 0) {
+      draft.expulsados.forEach((item) => addExpulsado(item));
+    } else {
+      addExpulsado();
+    }
+
+    // Cargar amonestados
+    document.getElementById('amonestadosList').innerHTML = '';
+    if (draft.amonestados && draft.amonestados.length > 0) {
+      draft.amonestados.forEach((item) => addAmonestado(item));
+    } else {
+      addAmonestado();
+    }
+
+    recalcularHorarios();
+    return true;
+  } catch (err) {
+    console.warn('Error al cargar borrador:', err);
+    return false;
+  }
+}
+
+function confirmarNuevoPartido() {
+  if (confirm('¿Deseas iniciar un nuevo partido? Se limpiarán los datos del partido actual (tus logos y datos personales se mantendrán).')) {
+    setVal('clubLocal', '');
+    setVal('clubVisitante', '');
+    setVal('golesLocal', '');
+    setVal('golesVisitante', '');
+    setVal('fecha', '');
+    setVal('estadio', '');
+    setVal('division', '');
+    setVal('duracionTiempo', '45');
+    setVal('horaInicio', '');
+    setVal('descanso', '15');
+    setVal('adic1', '0');
+    setVal('adic2', '0');
+    setVal('t1desde', '');
+    setVal('t1hasta', '');
+    setVal('t2desde', '');
+    setVal('t2hasta', '');
+    setVal('relato', '');
+    setVal('capLocal', '');
+    setVal('capVisitante', '');
+
+    document.getElementById('expulsadosList').innerHTML = '';
+    document.getElementById('amonestadosList').innerHTML = '';
+    addExpulsado();
+    addAmonestado();
+
+    try {
+      localStorage.removeItem('arbitro_borrador_partido');
+    } catch (e) {}
+
+    showToast('✓ Formulario listo para nuevo partido');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+// ==========================================
+// GENERACIÓN DE INFORME OFICIAL
+// ==========================================
 function generarInforme() {
   const clubLocal = val('clubLocal') || '—';
   const clubVisitante = val('clubVisitante') || '—';
@@ -326,8 +623,8 @@ function generarInforme() {
       })
     : '—';
   const estadio = val('estadio') || '—';
-  const arbitro = val('arbitro') || '—';
-  const arbitroDni = val('arbitroDni');
+  const arbitro = val('arbitro') || refereeState.name || '—';
+  const arbitroDni = val('arbitroDni') || refereeState.dni || '';
   const firmaArbitro = refereeState.signature;
 
   const t1desde = val('t1desde') || '—';
@@ -346,13 +643,13 @@ function generarInforme() {
   let expRows = '';
   let expNarrative = '';
   document.querySelectorAll('#expulsadosList .row-item').forEach((row) => {
-    const min = row.querySelector('.exp-min').value.trim();
-    const num = row.querySelector('.exp-num').value.trim();
-    const nombre = row.querySelector('.exp-nombre').value.trim();
-    const dni = row.querySelector('.exp-dni').value.trim();
-    const club = row.querySelector('.exp-club').value.trim();
-    const motivo = row.querySelector('.exp-motivo').value.trim();
-    const detalle = row.querySelector('.exp-detalle').value.trim();
+    const min = row.querySelector('.exp-min')?.value.trim() || '';
+    const num = row.querySelector('.exp-num')?.value.trim() || '';
+    const nombre = row.querySelector('.exp-nombre')?.value.trim() || '';
+    const dni = row.querySelector('.exp-dni')?.value.trim() || '';
+    const club = row.querySelector('.exp-club')?.value.trim() || '';
+    const motivo = row.querySelector('.exp-motivo')?.value.trim() || '';
+    const detalle = row.querySelector('.exp-detalle')?.value.trim() || '';
     if (nombre || dni) {
       expRows += `<tr><td>${dni || '—'}</td><td>${(nombre || '—').toUpperCase()}</td><td>${(club || '—').toUpperCase()}</td></tr>`;
       let linea = `A LOS ${min || '—'} MINUTOS DE PARTIDO, EXPULSÉ DEL CAMPO DE JUEGO AL JUGADOR N-${num || '—'} ${(nombre || '—').toUpperCase()} D.N.I ${dni || '—'} DEL CLUB ${(club || '—').toUpperCase()}`;
@@ -365,11 +662,12 @@ function generarInforme() {
   // Amonestados
   let amoRows = '';
   document.querySelectorAll('#amonestadosList .row-item').forEach((row) => {
-    const dni = row.querySelector('.amo-dni').value.trim();
-    const nombre = row.querySelector('.amo-nombre').value.trim();
-    const club = row.querySelector('.amo-club').value.trim();
+    const dni = row.querySelector('.amo-dni')?.value.trim() || '';
+    const num = row.querySelector('.amo-num')?.value.trim() || '';
+    const nombre = row.querySelector('.amo-nombre')?.value.trim() || '';
+    const club = row.querySelector('.amo-club')?.value.trim() || '';
     if (nombre || dni) {
-      amoRows += `<tr><td>${dni || '—'}</td><td>${(nombre || '—').toUpperCase()}</td><td>${(club || '—').toUpperCase()}</td></tr>`;
+      amoRows += `<tr><td>${dni || '—'}</td><td>${num ? `(${num}) ` : ''}${(nombre || '—').toUpperCase()}</td><td>${(club || '—').toUpperCase()}</td></tr>`;
     }
   });
 
@@ -460,15 +758,28 @@ function generarInforme() {
 
   document.getElementById('reportContent').innerHTML = html;
   document.getElementById('formView').style.display = 'none';
+  document.getElementById('quickToolsBar').style.display = 'none';
   document.getElementById('reportView').style.display = 'block';
-  
-  // Asignar título del documento para que el PDF se descargue con este nombre
+
+  // Configurar título del documento para que el PDF se descargue con formato reglamentario
   const pdfFileName = `${clubLocal} vs ${clubVisitante} - ${division}`;
   document.title = pdfFileName;
 
   window.scrollTo(0, 0);
+  showToast('✓ Informe reglamentario generado');
 }
 
+function volverAFormulario() {
+  document.title = 'Informe Arbitral - Fútbol Oficial';
+  document.getElementById('formView').style.display = 'block';
+  document.getElementById('quickToolsBar').style.display = 'flex';
+  document.getElementById('reportView').style.display = 'none';
+  window.scrollTo(0, 0);
+}
+
+// ==========================================
+// IMPRESIÓN Y EXPORTACIÓN DE PDF
+// ==========================================
 function imprimirInforme() {
   const clubLocal = val('clubLocal') || 'Local';
   const clubVisitante = val('clubVisitante') || 'Visitante';
@@ -477,8 +788,109 @@ function imprimirInforme() {
   window.print();
 }
 
-function volverAFormulario() {
-  document.title = 'Informe Arbitral Reglamentario';
-  document.getElementById('formView').style.display = 'block';
-  document.getElementById('reportView').style.display = 'none';
+// ==========================================
+// COMPARTIR Y COPIAR RESUMEN (WEB SHARE API)
+// ==========================================
+function getResumenTexto() {
+  const clubLocal = val('clubLocal') || 'Local';
+  const clubVisitante = val('clubVisitante') || 'Visitante';
+  const golesLocal = val('golesLocal') || '0';
+  const golesVisitante = val('golesVisitante') || '0';
+  const division = val('division') || '';
+  const fecha = val('fecha') || '';
+  const arbitro = val('arbitro') || refereeState.name || 'Árbitro Oficial';
+
+  let resumen = `📋 *INFORME ARBITRAL OFICIAL*\n`;
+  resumen += `⚽ *${clubLocal.toUpperCase()} (${golesLocal}) vs (${golesVisitante}) ${clubVisitante.toUpperCase()}*\n`;
+  if (division) resumen += `🏆 División: ${division}\n`;
+  if (fecha) resumen += `📅 Fecha: ${fecha}\n`;
+  resumen += `👤 Árbitro: ${arbitro}\n\n`;
+
+  // Expulsados
+  const expItems = [];
+  document.querySelectorAll('#expulsadosList .row-item').forEach((row) => {
+    const min = row.querySelector('.exp-min')?.value.trim();
+    const num = row.querySelector('.exp-num')?.value.trim();
+    const nom = row.querySelector('.exp-nombre')?.value.trim();
+    const club = row.querySelector('.exp-club')?.value.trim();
+    const mot = row.querySelector('.exp-motivo')?.value.trim();
+    if (nom) {
+      expItems.push(`• Min ${min || '?'}' [N°${num || '?'}] ${nom} (${club || 'Club'})${mot ? ' - ' + mot : ''}`);
+    }
+  });
+
+  if (expItems.length > 0) {
+    resumen += `🔴 *EXPULSADOS:*\n` + expItems.join('\n') + '\n\n';
+  } else {
+    resumen += `🔴 *EXPULSADOS:* Sin expulsados.\n\n`;
+  }
+
+  // Relato adicional
+  const relato = val('relato');
+  if (relato) {
+    resumen += `📝 *EXPLICACIÓN DE HECHOS:*\n${relato}\n`;
+  }
+
+  return resumen;
+}
+
+function compartirInforme() {
+  const resumen = getResumenTexto();
+  const titulo = `Informe Arbitral: ${val('clubLocal')} vs ${val('clubVisitante')}`;
+
+  if (navigator.share) {
+    navigator
+      .share({
+        title: titulo,
+        text: resumen,
+      })
+      .then(() => {
+        showToast('✓ Informe compartido');
+      })
+      .catch((err) => {
+        if (err.name !== 'AbortError') {
+          fallbackCompartirWhatsApp(resumen);
+        }
+      });
+  } else {
+    fallbackCompartirWhatsApp(resumen);
+  }
+}
+
+function fallbackCompartirWhatsApp(texto) {
+  const encoded = encodeURIComponent(texto);
+  const whatsappUrl = `https://api.whatsapp.com/send?text=${encoded}`;
+  window.open(whatsappUrl, '_blank');
+}
+
+function copiarTextoInforme() {
+  const resumen = getResumenTexto();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard
+      .writeText(resumen)
+      .then(() => {
+        showToast('✓ Resumen copiado al portapapeles');
+      })
+      .catch(() => {
+        copiarFallback(resumen);
+      });
+  } else {
+    copiarFallback(resumen);
+  }
+}
+
+function copiarFallback(texto) {
+  const textarea = document.createElement('textarea');
+  textarea.value = texto;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  try {
+    document.execCommand('copy');
+    showToast('✓ Resumen copiado al portapapeles');
+  } catch (e) {
+    alert('No se pudo copiar automáticamente. Por favor copia el texto manualmente.');
+  }
+  document.body.removeChild(textarea);
 }
