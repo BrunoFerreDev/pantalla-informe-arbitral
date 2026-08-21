@@ -1,0 +1,49 @@
+{
+  "name": "Informe Arbitral - Fútbol Oficial",
+  "short_name": "Informe Árbitro",
+  "description": "Aplicación oficial para árbitros de fútbol: cálculo de horarios, gestión disciplinaria e informes reglamentarios 100% offline.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#132a45",
+  "theme_color": "#132a45",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["sports", "productivity", "utilities"],
+  "shortcuts": [
+    {
+      "name": "Nuevo Informe Arbitral",
+      "short_name": "Nuevo",
+      "description": "Crear un nuevo informe de partido",
+      "url": "./index.html",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
+

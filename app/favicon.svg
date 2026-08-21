@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1f4068" />
+      <stop offset="100%" stop-color="#132a45" />
+    </linearGradient>
+    <linearGradient id="metalGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#d1d5db" />
+    </linearGradient>
+  </defs>
+
+  <!-- Fondo redondeado institucional -->
+  <rect width="64" height="64" rx="14" fill="url(#bgGrad)" />
+
+  <!-- Tarjeta Amarilla (inclinada a la izquierda) -->
+  <rect x="18" y="10" width="14" height="20" rx="2.5" fill="#facc15" transform="rotate(-15 25 20)" stroke="#ca8a04" stroke-width="0.8" />
+
+  <!-- Tarjeta Roja (inclinada a la derecha) -->
+  <rect x="32" y="10" width="14" height="20" rx="2.5" fill="#e11d48" transform="rotate(12 39 20)" stroke="#9f1239" stroke-width="0.8" />
+
+  <!-- Silbato de Árbitro -->
+  <g transform="translate(4, 4)">
+    <!-- Argolla del silbato -->
+    <path d="M 12 36 A 5 5 0 0 1 12 46" fill="none" stroke="url(#metalGrad)" stroke-width="3" stroke-linecap="round" />
+    
+    <!-- Cámara cilíndrica del silbato -->
+    <circle cx="24" cy="41" r="11" fill="url(#metalGrad)" />
+    <circle cx="24" cy="41" r="5" fill="#132a45" opacity="0.85" />
+    
+    <!-- Boquilla y cuerpo frontal -->
+    <path d="M 24 30 L 46 30 C 48 30 49 31.5 49 33.5 L 49 41 C 49 43 48 44.5 46 44.5 L 24 44.5 Z" fill="url(#metalGrad)" />
+    
+    <!-- Ranura de aire (orificio superior) -->
+    <rect x="29" y="27" width="5" height="5" rx="1" fill="#132a45" />
+  </g>
+</svg>
+
