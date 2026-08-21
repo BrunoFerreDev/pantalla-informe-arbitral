@@ -31,6 +31,7 @@ pantallaInforme/
 ├── index.html        # Estructura semántica del formulario y visor de informe
 ├── styles.css        # Estilos visuales, sistema de carga de logos y reglas de impresión
 ├── app.js            # Lógica de cálculo, persistencia en localStorage y generación de informe
+├── favicon.svg       # Favicon e icono vectorial de la aplicación
 └── README.md         # Documentación del proyecto
 ```
 
