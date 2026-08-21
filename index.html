@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Informe Arbitral Reglamentario</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+
+    <header class="top">
+      <h1>Informe Arbitral</h1>
+      <p>Cargá los datos del partido y generá el informe listo para imprimir o guardar como PDF.</p>
+    </header>
+
+    <div id="formView">
+
+      <!-- Personalización del Encabezado y Logos -->
+      <div class="card">
+        <h2>Encabezado y Logos Institucionales</h2>
+        <div class="field">
+          <label for="headerTitle">Título institucional del informe</label>
+          <input
+            id="headerTitle"
+            type="text"
+            value="ASOCIACIÓN DEL FÚTBOL ARGENTINO"
+          />
+          <p class="hint">Este título y los logos se guardan automáticamente para tus próximos informes.</p>
+        </div>
+
+        <label>Logos del encabezado (opcional)</label>
+        <div class="logo-uploaders-grid">
+          <!-- Logo Izquierdo -->
+          <div class="logo-slot" id="logoLeftSlot">
+            <div class="logo-slot-title">Logo Izquierdo (Ej. AFA)</div>
+            <div class="logo-preview-container" id="logoLeftPreview">
+              <div class="logo-empty-placeholder">
+                <span class="icon">🖼️</span>
+                <span>Sin logo</span>
+              </div>
+            </div>
+            <div class="file-input-wrapper" id="logoLeftUploadWrapper">
+              <span class="btn-upload-logo">Subir logo</span>
+              <input
+                type="file"
+                id="logoLeftInput"
+                accept="image/*"
+                onchange="handleLogoUpload('logoLeft', this)"
+              />
+            </div>
+            <button
+              type="button"
+              class="btn-remove-logo"
+              id="logoLeftRemoveBtn"
+              style="display: none;"
+              onclick="removeLogo('logoLeft')"
+            >
+              Quitar
+            </button>
+          </div>
+
+          <!-- Logo Central -->
+          <div class="logo-slot" id="logoCenterSlot">
+            <div class="logo-slot-title">Logo Central (Ej. Liga)</div>
+            <div class="logo-preview-container" id="logoCenterPreview">
+              <div class="logo-empty-placeholder">
+                <span class="icon">🖼️</span>
+                <span>Sin logo</span>
+              </div>
+            </div>
+            <div class="file-input-wrapper" id="logoCenterUploadWrapper">
+              <span class="btn-upload-logo">Subir logo</span>
+              <input
+                type="file"
+                id="logoCenterInput"
+                accept="image/*"
+                onchange="handleLogoUpload('logoCenter', this)"
+              />
+            </div>
+            <button
+              type="button"
+              class="btn-remove-logo"
+              id="logoCenterRemoveBtn"
+              style="display: none;"
+              onclick="removeLogo('logoCenter')"
+            >
+              Quitar
+            </button>
+          </div>
+
+          <!-- Logo Derecho -->
+          <div class="logo-slot" id="logoRightSlot">
+            <div class="logo-slot-title">Logo Derecho (Ej. Consejo)</div>
+            <div class="logo-preview-container" id="logoRightPreview">
+              <div class="logo-empty-placeholder">
+                <span class="icon">🖼️</span>
+                <span>Sin logo</span>
+              </div>
+            </div>
+            <div class="file-input-wrapper" id="logoRightUploadWrapper">
+              <span class="btn-upload-logo">Subir logo</span>
+              <input
+                type="file"
+                id="logoRightInput"
+                accept="image/*"
+                onchange="handleLogoUpload('logoRight', this)"
+              />
+            </div>
+            <button
+              type="button"
+              class="btn-remove-logo"
+              id="logoRightRemoveBtn"
+              style="display: none;"
+              onclick="removeLogo('logoRight')"
+            >
+              Quitar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Partido y Resultado -->
+      <div class="card">
+        <h2>Partido y resultado</h2>
+        <div class="grid">
+          <div class="field">
+            <label for="clubLocal">Club local</label>
+            <input id="clubLocal" />
+          </div>
+          <div class="field">
+            <label for="clubVisitante">Club visitante</label>
+            <input id="clubVisitante" />
+          </div>
+        </div>
+        <div class="grid cols3">
+          <div class="field">
+            <label for="golesLocal">Goles local</label>
+            <input id="golesLocal" type="number" min="0" />
+          </div>
+          <div class="field">
+            <label for="golesVisitante">Goles visitante</label>
+            <input id="golesVisitante" type="number" min="0" />
+          </div>
+          <div></div>
+        </div>
+        <div class="grid cols3">
+          <div class="field">
+            <label for="fecha">Fecha</label>
+            <input id="fecha" type="date" />
+          </div>
+          <div class="field">
+            <label for="estadio">Estadio</label>
+            <input id="estadio" />
+          </div>
+          <div class="field">
+            <label for="arbitro">Árbitro</label>
+            <input id="arbitro" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="division">División</label>
+          <select id="division" onchange="recalcularHorarios()">
+            <option value="">Seleccionar...</option>
+            <option value="Primera Division" data-min="45">Primera División (45 + 45 min)</option>
+            <option value="Sub-21" data-min="40">Sub-21 (40 + 40 min)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Horarios -->
+      <div class="card">
+        <h2>Horarios</h2>
+        <p class="hint" id="duracionHint">Elegí la división para calcular los horarios automáticamente.</p>
+        <div class="grid cols3">
+          <div class="field">
+            <label for="horaInicio">Hora de inicio del partido</label>
+            <input id="horaInicio" type="time" onchange="recalcularHorarios()" />
+          </div>
+          <div class="field">
+            <label for="descanso">Duración del entretiempo (min)</label>
+            <input id="descanso" type="number" min="0" value="15" onchange="recalcularHorarios()" />
+          </div>
+          <div></div>
+        </div>
+        <div class="grid">
+          <div class="field">
+            <label for="adic1">Minutos adicionados 1er tiempo</label>
+            <input id="adic1" type="number" min="0" value="0" onchange="recalcularHorarios()" />
+          </div>
+          <div class="field">
+            <label for="adic2">Minutos adicionados 2do tiempo</label>
+            <input id="adic2" type="number" min="0" value="0" onchange="recalcularHorarios()" />
+          </div>
+        </div>
+        <div class="grid cols4" style="margin-top: 6px">
+          <div class="field">
+            <label>1er tiempo desde (auto)</label>
+            <input id="t1desde" type="time" readonly />
+          </div>
+          <div class="field">
+            <label>1er tiempo hasta (auto)</label>
+            <input id="t1hasta" type="time" readonly />
+          </div>
+          <div class="field">
+            <label>2do tiempo desde (auto)</label>
+            <input id="t2desde" type="time" readonly />
+          </div>
+          <div class="field">
+            <label>2do tiempo hasta (auto)</label>
+            <input id="t2hasta" type="time" readonly />
+          </div>
+        </div>
+      </div>
+
+      <!-- Explicación de Hecho -->
+      <div class="card">
+        <h2>Explicación de hecho (relato del árbitro)</h2>
+        <div class="field">
+          <label for="relato">Texto libre — describí lo sucedido (expulsiones, incidentes, etc.)</label>
+          <textarea
+            id="relato"
+            style="min-height: 120px"
+          ></textarea>
+          <p class="hint">Se puede escribir todo el relato acá, o dejarlo en blanco y usar solo la lista de expulsados de abajo.</p>
+        </div>
+      </div>
+
+      <!-- Expulsados -->
+      <div class="card">
+        <h2>Expulsados</h2>
+        <div id="expulsadosList"></div>
+        <button type="button" class="add-btn" onclick="addExpulsado()">+ Agregar expulsado</button>
+      </div>
+
+      <!-- Amonestados -->
+      <div class="card">
+        <h2>Amonestados</h2>
+        <div id="amonestadosList"></div>
+        <button type="button" class="add-btn" onclick="addAmonestado()">+ Agregar amonestado</button>
+      </div>
+
+      <!-- Capitanes -->
+      <div class="card">
+        <h2>Capitanes</h2>
+        <div class="grid">
+          <div class="field">
+            <label for="capLocal">Capitán local (nombre y N°)</label>
+            <input id="capLocal" />
+          </div>
+          <div class="field">
+            <label for="capVisitante">Capitán visitante (nombre y N°)</label>
+            <input id="capVisitante" />
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn-primary" onclick="generarInforme()">Generar informe</button>
+      </div>
+    </div>
+
+    <!-- Vista de Reporte Final -->
+    <div id="reportView">
+      <div class="print-toolbar">
+        <button type="button" class="btn-secondary" onclick="volverAFormulario()">← Editar datos</button>
+        <button type="button" class="btn-primary" onclick="window.print()">Imprimir / Guardar PDF</button>
+      </div>
+      <div class="report-page" id="reportContent"></div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
